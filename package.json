@@ -1,0 +1,21 @@
+{
+  "name": "prometheus-application",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/libs/server.js",
+  "scripts": {
+    "start": "nodemon src/libs/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-cloudwatch": "^3.338.0",
+    "convict": "^6.2.4",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "mongodb": "^5.5.0",
+    "nodemon": "^2.0.22",
+    "prom-client": "^14.2.0"
+  }
+}
