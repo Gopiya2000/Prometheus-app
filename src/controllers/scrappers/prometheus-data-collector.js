@@ -1,24 +1,25 @@
 const { fiveMinutesInMilliseconds } = require("../../constants/app-constants");
-const dbService = require("../../services/common/db-service");
 const AWSPrometheusScraper = require("./aws-prometheus-scraper");
 const PrometheusDatabaseScraper = require("./prometheus-database-scraper");
 
 class PrometheusDataCollector {
-    constructor(callCount, register) {
-        this.callCount = callCount;
+    constructor(register, databaseConnection) {
         this.register = register;
+        this.awsState = new AWSPrometheusScraper(this.register, this)
+        this.databaseState = new PrometheusDatabaseScraper(this.register, databaseConnection.getClient(), this)
+        this.currentState = this.awsState;
     }
-    scrapeData() {
-        const databaseConnection = new dbService();
-        databaseConnection.start();
-        const scrapeAws = new AWSPrometheusScraper(this.register);
-        const scrapeDatabase = new PrometheusDatabaseScraper(this.register, databaseConnection.getClient());
-        scrapeDatabase.scrape(this.callCount);
-        scrapeAws.scrape(this.callCount);
+
+    setState(newState) {
+        this.currentState = newState;
+    }
+    scrapeData(callCount) {
+        this.currentState.scrape(callCount);
+    }
+    startScrapeInterval(callCount) {
         setInterval(() => {
-            this.callCount = this.callCount + 5
-            scrapeAws.scrape(this.callCount);
-            scrapeDatabase.scrape(this.callCount);
+            callCount = callCount + 5;
+            this.scrapeData(callCount)
         }, fiveMinutesInMilliseconds);
     }
 }

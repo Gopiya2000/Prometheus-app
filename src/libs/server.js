@@ -2,6 +2,7 @@ const Prometheus = require('prom-client');
 const { route } = require('../routes/index');
 const express = require('express');
 const prometheusDataCollector = require('../controllers/scrappers/prometheus-data-collector');
+const DbService = require('../services/common/db-service');
 
 let callCount = 0;
 
@@ -17,7 +18,10 @@ Prometheus.collectDefaultMetrics({ register })
 
 route(register, app);
 
-const scrapper = new prometheusDataCollector(callCount, register);
-scrapper.scrapeData()
+const databaseConnection = new DbService();
+databaseConnection.start();
+
+const scrapper = new prometheusDataCollector(register, databaseConnection);
+scrapper.scrapeData(callCount)
 
 module.exports = { app }
