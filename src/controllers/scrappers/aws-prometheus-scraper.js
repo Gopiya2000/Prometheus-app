@@ -5,12 +5,13 @@ const { awsParamsArray } = require("../../services/metrics");
 const AbstractPrometheusCollector = require("./abstract-prometheus-collector");
 
 class AWSPrometheusScraper extends AbstractPrometheusCollector {
-    constructor(register) {
+    constructor(register, scrapper) {
         super()
         this.register = register;
+        this.scrapper = scrapper;
     }
 
-    scrape(callCount) {
+    async scrape(callCount) {
         const client = new CloudWatchClient({ region: config.get('region') });
         const currentTime = new Date();
         awsParamsArray.forEach(async (item) => {
@@ -22,6 +23,8 @@ class AWSPrometheusScraper extends AbstractPrometheusCollector {
             let gauge = this.createGauge(params, this.register);
             this.getValue(gauge, params, callCount, response);
         })
+        await this.scrapper.setState(this.scrapper.databaseState)
+        this.scrapper.scrapeData(callCount)
     }
 
     getValue(gauge, params, callCount, response) {
