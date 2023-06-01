@@ -1,8 +1,10 @@
 const Prometheus = require('prom-client');
 const { route } = require('../routes/index');
 const express = require('express');
-const prometheusDataCollector = require('../controllers/scrappers/prometheus-data-collector');
-const DbService = require('../services/common/db-service');
+const prometheusDataCollector = require('../controllers/scrapers/prometheus-data-collector');
+const { fiveMinutesInMilliseconds } = require('../constants/app-constants');
+const AWSPrometheusScraper = require('../controllers/scrapers/aws-prometheus-scraper');
+const PrometheusDatabaseScraper = require('../controllers/scrapers/prometheus-database-scraper');
 
 let callCount = 0;
 
@@ -18,10 +20,14 @@ Prometheus.collectDefaultMetrics({ register })
 
 route(register, app);
 
-const databaseConnection = new DbService();
-databaseConnection.start();
+const awsState = new AWSPrometheusScraper(register)
+const databaseState = new PrometheusDatabaseScraper(register)
 
-const scrapper = new prometheusDataCollector(register, databaseConnection);
-scrapper.scrapeData(callCount)
+const scraper = new prometheusDataCollector(register, awsState, databaseState);
+scraper.scrapeData(callCount)
+setInterval(() => {
+    callCount = callCount + 5;
+    scraper.scrapeData(callCount)
+}, fiveMinutesInMilliseconds);
 
 module.exports = { app }

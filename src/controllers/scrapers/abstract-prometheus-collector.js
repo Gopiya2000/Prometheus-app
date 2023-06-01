@@ -1,14 +1,12 @@
-const GaugeMetricManager = require("../../services/common/gauge-metric-manager");
+class AbstractPrometheusCollector {
 
-class AbstractPrometheusCollector extends GaugeMetricManager {
-
-    scrape(){
+    scrape() {
         throw new Error('You have to implement the method scrape!');
     }
-    getValue(){
+    getValue() {
         throw new Error('You have to implement the method getValue!');
     }
-    setValue(){
+    setValue() {
         throw new Error('You have to implement the method setValue!');
     }
 }

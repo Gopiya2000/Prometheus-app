@@ -1,30 +1,26 @@
-const { CloudWatchClient, GetMetricStatisticsCommand } = require("@aws-sdk/client-cloudwatch");
-const config = require("../../../config");
 const { oneMinuteInMilliseconds } = require("../../constants/app-constants");
 const { awsParamsArray } = require("../../services/metrics");
 const AbstractPrometheusCollector = require("./abstract-prometheus-collector");
+const PrometheusDatabaseScraper = require("./prometheus-database-scraper");
 
 class AWSPrometheusScraper extends AbstractPrometheusCollector {
-    constructor(register, scrapper) {
+    constructor(register) {
         super()
         this.register = register;
-        this.scrapper = scrapper;
     }
 
-    async scrape(callCount) {
-        const client = new CloudWatchClient({ region: config.get('region') });
+    async scrape(callCount, scraper) {
         const currentTime = new Date();
         awsParamsArray.forEach(async (item) => {
             const { params } = item;
             params.StartTime = new Date(currentTime - params.Interval);
             params.EndTime = currentTime;
-            const command = new GetMetricStatisticsCommand(item.params);
-            const response = await client.send(command);
-            let gauge = this.createGauge(params, this.register);
+            let response = await scraper.gaugeMetric.cloudwatch(item);
+            let gauge = scraper.gaugeMetric.createGauge(params, this.register);
             this.getValue(gauge, params, callCount, response);
         })
-        await this.scrapper.setState(this.scrapper.databaseState)
-        this.scrapper.scrapeData(callCount)
+        await scraper.setState(new PrometheusDatabaseScraper(this.register, this.scraper))
+        scraper.scrapeData(callCount)
     }
 
     getValue(gauge, params, callCount, response) {

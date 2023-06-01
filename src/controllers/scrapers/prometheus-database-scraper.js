@@ -3,20 +3,19 @@ const { databaseParamsArray } = require("../../services/metrics");
 const AbstractPrometheusCollector = require("./abstract-prometheus-collector");
 
 class PrometheusDatabaseScraper extends AbstractPrometheusCollector {
-    constructor(register, db, scrapper) {
+    constructor(register, scraper) {
         super()
         this.register = register;
-        this.scrapper = scrapper;
-        this.dbQueryService = new queryService(db);
+        this.scraper = scraper;
+        this.dbQueryService = new queryService();
     }
 
-    async scrape(callCount) {
+    async scrape(callCount, scraper) {
         databaseParamsArray.forEach(async (item) => {
-            let gauge = await this.createGauge(item, this.register);
+            let gauge = await scraper.gaugeMetric.createGauge(item, this.register);
             this.getValue(gauge, item, callCount);
         })
-        await this.scrapper.setState(this.scrapper.awsState)
-        this.scrapper.startScrapeInterval(callCount)
+        await scraper.setState(scraper.awsState)
     }
 
     async getValue(gauge, params) {
